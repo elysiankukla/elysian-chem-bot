@@ -1,3 +1,6 @@
+# Pyrogram's session file
+*.session
+
 # Python-generated files
 __pycache__/
 *.py[oc]
