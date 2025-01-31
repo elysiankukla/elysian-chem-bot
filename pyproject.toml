@@ -1,7 +1,18 @@
 [project]
 name = "elysian-chem-bot"
 version = "0.1.0"
-description = "Add your description here"
+description = "Source code for https://t.me/ElysianChemBot"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "kurigram>=2.1.37",
+    "tgcrypto>=1.2.5",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.9.3",
+]
+
+[tool.ruff]
+line-length = 120
