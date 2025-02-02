@@ -14,8 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
+import atexit
 import json
 from typing import Any, cast
+
+log: logging.Logger = logging.getLogger(__name__)
 
 
 class Database:
@@ -27,6 +31,7 @@ class Database:
         self.raw_db: dict | None = None
 
         self.load_db()
+        atexit.register(self._atexit)
 
     def load_db(self) -> None:
         with open(self.db_path, "r", encoding="utf-8") as f:
@@ -132,3 +137,7 @@ class Database:
             cur_section = cur_section.get(sec)
 
         return list(cur_section.keys())
+
+    def _atexit(self) -> None:
+        log.info("atexit trigger: saving db to file")
+        self.write_db()
