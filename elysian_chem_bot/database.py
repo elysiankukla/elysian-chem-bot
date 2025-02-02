@@ -31,7 +31,7 @@ class Database:
     def load_db(self) -> None:
         with open(self.db_path, "r", encoding="utf-8") as f:
             self.raw_db = json.load(f)
-            if isinstance(self.raw_db, dict):
+            if not isinstance(self.raw_db, dict):
                 raise TypeError(f"something is wrong with database, the type is: {type(self.raw_db)}")
 
     def write_db(self) -> None:
