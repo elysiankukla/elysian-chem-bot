@@ -7,6 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "kurigram>=2.1.37",
     "tgcrypto>=1.2.5",
+    "uvloop>=0.21.0",
 ]
 
 [dependency-groups]

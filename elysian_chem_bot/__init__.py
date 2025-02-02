@@ -17,6 +17,8 @@
 import os
 import inspect
 
+import uvloop
+
 from pathlib import Path
 
 from pyrogram.client import Client
@@ -30,4 +32,5 @@ if any((API_ID == 0, API_HASH == "", BOT_TOKEN == "")):
     raise ValueError("please set API_ID, API_HASH and BOT_TOKEN properly")
 
 plugins: dict[str, str] = {"root": f"{__name__.removesuffix('.main')}.plugins"}
+uvloop.install()
 app: Client = Client("elysian_chem_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN, plugins=plugins)
