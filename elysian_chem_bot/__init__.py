@@ -15,10 +15,19 @@
 # limitations under the License.
 
 import os
+import inspect
+
+from pathlib import Path
+
+from pyrogram.client import Client
 
 API_ID: int = int(os.getenv("API_ID", 0))
 API_HASH: str = os.getenv("API_HASH", "")
 BOT_TOKEN: str = os.getenv("BOT_TOKEN", "")
+MODULE_DIR: str = str(Path(inspect.getfile(lambda _: _)).parent)
 
 if any((API_ID == 0, API_HASH == "", BOT_TOKEN == "")):
     raise ValueError("please set API_ID, API_HASH and BOT_TOKEN properly")
+
+plugins: dict[str, str] = {"root": f"{__name__.removesuffix('.main')}.plugins"}
+app: Client = Client("elysian_chem_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN, plugins=plugins)
