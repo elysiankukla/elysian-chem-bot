@@ -14,3 +14,4 @@ wheels/
 
 # Misc
 *.log
+*.json
