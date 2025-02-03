@@ -18,7 +18,7 @@ import inspect
 import logging
 import os
 
-import elysian_chem_bot.logging  # noqa: F401
+import elysian_chem_bot.coloured_logging_setup  # noqa: F401
 
 import uvloop
 
