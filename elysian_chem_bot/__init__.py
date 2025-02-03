@@ -14,19 +14,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import inspect
+import logging
+import os
+
+import elysian_chem_bot.logging  # noqa: F401
 
 import uvloop
 
 from pathlib import Path
 
+from elysian_chem_bot import database
+
 from pyrogram.client import Client
+
+_log: logging.Logger = logging.getLogger(__name__)
 
 API_ID: int = int(os.getenv("API_ID", 0))
 API_HASH: str = os.getenv("API_HASH", "")
 BOT_TOKEN: str = os.getenv("BOT_TOKEN", "")
 MODULE_DIR: str = str(Path(inspect.getfile(lambda _: _)).parent)
+DB_PERSIST_PATH: str = os.getenv("DB_PERSIST_PATH", "/persist/db.json")
+
+if Path(DB_PERSIST_PATH).exists() is False:
+    _log.info(f"creating db file at {DB_PERSIST_PATH}")
+    casted = [str(x) for x in Path(DB_PERSIST_PATH).parents]
+    "/".join(casted)
+    with open(DB_PERSIST_PATH, "w", encoding="utf-8") as f:
+        f.write("{}")
+
+db_instance: database.Database = database.Database(DB_PERSIST_PATH)
 
 if any((API_ID == 0, API_HASH == "", BOT_TOKEN == "")):
     raise ValueError("please set API_ID, API_HASH and BOT_TOKEN properly")

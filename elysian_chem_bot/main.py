@@ -14,8 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import elysian_chem_bot.logging  # noqa: F401
-
 from elysian_chem_bot import app
 
 from pyrogram.client import Client
