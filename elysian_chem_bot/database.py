@@ -28,7 +28,7 @@ class Database:
     def __init__(self, db_path: str = "") -> None:
         self.db_path = db_path
         self.db_loaded: bool = False
-        self.raw_db: dict | None = None
+        self.raw_db: dict[str, Any] | None = None
 
         self.load_db()
         atexit.register(self._atexit)
@@ -57,7 +57,7 @@ class Database:
         cur_section: dict | Any = self.raw_db
         for sec in sections:
             cur_section = cur_section.get(sec)
-            if cur_section is None:
+            if cur_section is None or not isinstance(cur_section, dict):
                 return False, cur_section
 
         return True, None
@@ -91,7 +91,7 @@ class Database:
         cur_section.pop(sections[-1])
 
     def add_file(self, sections: list[str], file_name: str, file_id: str, file_unique_id: str) -> None:
-        _, status = self.is_sections_exist(sections)
+        status, _ = self.is_sections_exist(sections)
         if not status:
             raise ValueError("sections does not exist!")
 
