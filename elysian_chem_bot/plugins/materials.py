@@ -51,7 +51,7 @@ async def handle_reply(client: Client, message: Message) -> None:
     sections: list[str] = [x[1] for x in msg_to_be_watched if x[0] == message.reply_to_message.id][0]
     sections.append(message.text)
 
-    if not db_instance.is_sections_exist(sections):
+    if not db_instance.is_sections_exist(sections)[0]:
         sections.pop()
         file: tuple[str, str] = db_instance.get_file(sections, message.text)
         await message.reply_document(file[0])

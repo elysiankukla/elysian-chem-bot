@@ -113,7 +113,7 @@ class Database:
         cur_section.pop(file_name)
 
     def get_file(self, sections: list[str], file_name: str) -> tuple[str, str]:
-        _, status = self.is_sections_exist(sections)
+        status, _ = self.is_sections_exist(sections)
         if not status:
             raise ValueError("sections does not exist!")
 
