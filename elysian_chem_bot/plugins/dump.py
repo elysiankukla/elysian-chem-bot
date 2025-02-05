@@ -14,6 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import io
+import json
+
+from tempfile import NamedTemporaryFile
+
 from elysian_chem_bot import db_instance
 
 from pyrogram.client import Client
@@ -23,6 +28,9 @@ from pyrogram.filters import command
 
 @Client.on_message(command("dumpdb"))
 async def dump_db(client: Client, message: Message) -> None:
-    db_instance.write_db()
-    with open(db_instance.db_path, "rb") as f:
-        await message.reply_document(f)
+    with NamedTemporaryFile(suffix=".json") as f:
+        with open(f.name, "w", encoding="utf-8") as jf:
+            json.dump(db_instance.raw_db, jf, indent=4)
+
+        with open(f.name, "rb") as rf:
+            await message.reply_document(rf)
