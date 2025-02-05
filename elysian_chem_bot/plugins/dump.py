@@ -23,5 +23,6 @@ from pyrogram.filters import command
 
 @Client.on_message(command("dumpdb"))
 async def dump_db(client: Client, message: Message) -> None:
+    db_instance.write_db()
     with open(db_instance.db_path, "rb") as f:
         await message.reply_document(f)
