@@ -49,9 +49,12 @@ async def get_buttons(sections: list[str]) -> list[str]:
     return list(cur_section)
 
 
-@Client.on_message(create(should_be_handled))
+@Client.on_message(create(should_be_handled), group=1)
 async def handle_reply(client: Client, message: Message) -> None:
     global users_to_be_watched
+
+    if message.text.lower() == "/bahan":
+        return
 
     if any([message.from_user.id == x[0] for x in users_to_be_watched]):
         sections: list[str] = [x[1] for x in users_to_be_watched if x[0] == message.from_user.id][0]
