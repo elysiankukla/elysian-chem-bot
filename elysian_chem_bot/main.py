@@ -23,7 +23,7 @@ from pyrogram.filters import command
 
 
 async def start(client: Client, message: Message) -> None:
-    await message.reply_text("hi")
+    await message.reply_text("Send /bahan to get started!")
 
 
 def main() -> None:
