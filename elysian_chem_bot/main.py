@@ -14,7 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from elysian_chem_bot import app
+import time
+
+from elysian_chem_bot import SUPER_USERS, app
 
 from pyrogram.client import Client
 from pyrogram.types.messages_and_media import Message
@@ -26,6 +28,18 @@ async def start(client: Client, message: Message) -> None:
     await message.reply_text("Send /bahan to get started!")
 
 
+async def reload_modules(client: Client, message: Message) -> None:
+    if message.from_user.id not in SUPER_USERS:
+        return
+
+    msg = await message.reply_text("Reloading plugins...")
+    start = time.perf_counter()
+    app.load_plugins()
+    stop = time.perf_counter()
+    await msg.edit_text(f"**Plugins reloaded.** Took {stop - start} seconds")
+
+
 def main() -> None:
     app.add_handler(MessageHandler(start, command("start")))
+    app.add_handler(MessageHandler(reload_modules, command("reload")))
     app.run()

@@ -36,6 +36,8 @@ BOT_TOKEN: str = os.getenv("BOT_TOKEN", "")
 MODULE_DIR: str = str(Path(inspect.getfile(lambda _: _)).parent)
 DB_PERSIST_PATH: str = os.getenv("DB_PERSIST_PATH", "/persist/db.json")
 
+SUPER_USERS: list[int] = [1024853832]
+
 if Path(DB_PERSIST_PATH).exists() is False:
     _log.info(f"creating db file at {DB_PERSIST_PATH}")
     casted = [str(x) for x in Path(DB_PERSIST_PATH).parents]
