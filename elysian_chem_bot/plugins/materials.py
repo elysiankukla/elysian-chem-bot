@@ -29,13 +29,12 @@ from elysian_chem_bot.utils import sanitize_message
 
 log: logging.Logger = logging.getLogger(__name__)
 msg_to_be_watched: list[tuple[int, list[str]]] = []
-users_to_be_watched: list[tuple[int, list[str]]] = []
 
 
 async def should_be_handled(_, __, message: Message) -> bool:
-    return any([message.reply_to_message.id == x[0] for x in msg_to_be_watched]) or any(
-        [message.from_user.id == x[0] for x in users_to_be_watched]
-    )
+    if not message.reply_to_message:
+        return any([message.chat.id == x[0] for x in msg_to_be_watched])
+    return any([message.reply_to_message.id == x[0] for x in msg_to_be_watched])
 
 
 async def get_buttons(sections: list[str]) -> list[str]:
@@ -51,13 +50,13 @@ async def get_buttons(sections: list[str]) -> list[str]:
 
 @Client.on_message(create(should_be_handled), group=1)
 async def handle_reply(client: Client, message: Message) -> None:
-    global users_to_be_watched
+    global msg_to_be_watched
 
-    if message.text.lower() == "/bahan":
+    if message.text.lower() in ["/bahan", "/material"]:
         return
 
-    if any([message.from_user.id == x[0] for x in users_to_be_watched]):
-        sections: list[str] = [x[1] for x in users_to_be_watched if x[0] == message.from_user.id][0]
+    if message.from_user.id == message.chat.id:
+        sections: list[str] = [x[1] for x in msg_to_be_watched if x[0] == message.from_user.id][0]
     else:
         sections: list[str] = [x[1] for x in msg_to_be_watched if x[0] == message.reply_to_message.id][0]
     sections.append(message.text)
@@ -93,18 +92,18 @@ async def handle_reply(client: Client, message: Message) -> None:
         reply_markup=ReplyKeyboardMarkup(buttons_rows),
     )
 
-    if any([message.from_user.id == x[0] for x in users_to_be_watched]):
+    if any([message.chat.id == x[0] for x in msg_to_be_watched]):
         rem: list[str] = sections.copy()
         rem.pop()
-        users_to_be_watched = list(filter(lambda x: x[0] != message.from_user.id, users_to_be_watched))
-        users_to_be_watched.append((message.from_user.id, sections))
+        msg_to_be_watched = list(filter(lambda x: x[0] != message.from_user.id, msg_to_be_watched))
+        msg_to_be_watched.append((message.from_user.id, sections))
     else:
         msg_to_be_watched.append((msg.id, sections))
 
 
 @Client.on_message(command(["bahan", "material"]))
 async def material(client: Client, message: Message) -> None:
-    global users_to_be_watched
+    global msg_to_be_watched
 
     material_buttons: list[str] = await get_buttons([])
     buttons_rows: list[list[Union[KeyboardButton, str]]] = []
@@ -127,8 +126,8 @@ async def material(client: Client, message: Message) -> None:
     )
 
     if message.chat.id > 0:
-        users_to_be_watched = list(filter(lambda x: x[0] != message.from_user.id, users_to_be_watched))
-        users_to_be_watched.append((message.chat.id, []))
+        msg_to_be_watched = list(filter(lambda x: x[0] != message.from_user.id, msg_to_be_watched))
+        msg_to_be_watched.append((message.chat.id, []))
     else:
         msg_to_be_watched.append((msg.id, []))
 
