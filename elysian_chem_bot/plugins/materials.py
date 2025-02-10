@@ -15,8 +15,11 @@
 # limitations under the License.
 
 import logging
+import zipfile
 
 from typing import Union, Any, cast
+from tempfile import NamedTemporaryFile, TemporaryDirectory
+from pathlib import Path
 
 from elysian_chem_bot import db_instance
 
@@ -48,6 +51,36 @@ async def get_buttons(sections: list[str]) -> list[str]:
     return list(cur_section)
 
 
+# TODO: cache file_id to not spam telegram server for file upload requests
+#       that already exist in the server
+async def auto_extract_zip_archive(client: Client, message: Message, file_id: str) -> None:
+    msg = await message.reply_text("Automatically extracting zip archive...")
+    with NamedTemporaryFile() as tf:
+        log.info(f"created temporary file '{tf.name}'")
+
+        log.info(f"downloading document with file_id '{file_id}'")
+        await msg.edit_text(f"**downloading document with file_id** `'{file_id}'`")
+        await client.download_media(file_id, tf.name)
+        log.info("document downloaded")
+
+        with TemporaryDirectory() as td:
+            log.info(f"created temporary directory '{td}' for archive extraction")
+            log.info("**extracting archive**")
+            await msg.edit_text("Extracting the zip archive...")
+            zipfile.ZipFile(tf.name).extractall(td)
+            log.info("archive extracted")
+
+            log.info("uploading extracted files")
+            for file in Path(td).rglob("*"):
+                if file.is_file():
+                    log.info(f"uploading file '{file.as_posix()}'")
+                    await msg.edit_text(f"**uploading file** `'{file.as_posix()}'`")
+                    with open(file.as_posix(), "rb") as f:
+                        await message.reply_document(f, file_name=file.name)
+
+            await msg.delete()
+
+
 @Client.on_message(create(should_be_handled), group=1)
 async def handle_reply(client: Client, message: Message) -> None:
     global msg_to_be_watched
@@ -65,6 +98,11 @@ async def handle_reply(client: Client, message: Message) -> None:
         sections.pop()
         file: tuple[str, str] = db_instance.get_file(sections, message.text)
         await message.reply_document(file[0])
+
+        if message.text.endswith(".zip"):
+            log.info("file ends with .zip, extracting")
+            await auto_extract_zip_archive(client, message, file[0])
+
         return
 
     material_buttons: list[str] = await get_buttons(sections)
