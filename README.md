@@ -51,6 +51,7 @@ As you can see, the required variables are: `API_ID`, `API_HASH`, `BOT_TOKEN`, `
 
 This list is non-exhaustive.
 
+- **Highest priority: back button!!!** *<sup>imagine sending /bahan a lot of times</sup>***
 - Proper typing. For example, in [`database.py`](./elysian_chem_bot/database.py),
   `sections` parameters are annotated with `list[str]`. So is in another modules.
 - Add more debug logging, in case something went wrong later.
