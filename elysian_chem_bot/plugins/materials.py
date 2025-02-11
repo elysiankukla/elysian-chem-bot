@@ -22,7 +22,7 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 from pathlib import Path
 from hashlib import sha1
 
-from elysian_chem_bot import db_instance, DB_PERSIST_PATH
+from elysian_chem_bot import db_instance, cmdhelp_instance, DB_PERSIST_PATH
 
 from tgbot_python_v2.util.config import Config
 from pyrogram.client import Client
@@ -222,3 +222,6 @@ async def add_material(client: Client, message: Message) -> None:
 
     mantap = [f"__{x.document.file_name}__" for x in medias]
     await message.reply_text(f"added {', '.join(mantap)} to section **{sections}**")
+
+
+cmdhelp_instance.add_commands(["bahan", "material"], "Get materials")

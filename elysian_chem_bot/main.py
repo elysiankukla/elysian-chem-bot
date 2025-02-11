@@ -14,9 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import asyncio
 import time
 
-from elysian_chem_bot import SUPER_USERS, app
+from elysian_chem_bot import SUPER_USERS, app, cmdhelp_instance
 
 from pyrogram.client import Client
 from pyrogram.types.messages_and_media import Message
@@ -42,4 +43,10 @@ async def reload_modules(client: Client, message: Message) -> None:
 def main() -> None:
     app.add_handler(MessageHandler(start, command("start")))
     app.add_handler(MessageHandler(reload_modules, command("reload")))
-    app.run()
+
+    cmdhelp_instance.add_commands("start", "start the bot")
+    app.load_plugins()
+    _ = app.start()
+    cmdhelp_instance.update_commands_telegram()
+
+    asyncio.get_event_loop().run_forever()

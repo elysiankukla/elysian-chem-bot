@@ -24,7 +24,7 @@ import uvloop
 
 from pathlib import Path
 
-from elysian_chem_bot import database
+from elysian_chem_bot import database, command_helps
 
 from pyrogram.client import Client
 
@@ -45,7 +45,6 @@ if Path(DB_PERSIST_PATH).exists() is False:
     with open(DB_PERSIST_PATH, "w", encoding="utf-8") as f:
         f.write("{}")
 
-db_instance: database.Database = database.Database(DB_PERSIST_PATH)
 
 if any((API_ID == 0, API_HASH == "", BOT_TOKEN == "")):
     raise ValueError("please set API_ID, API_HASH and BOT_TOKEN properly")
@@ -53,3 +52,6 @@ if any((API_ID == 0, API_HASH == "", BOT_TOKEN == "")):
 plugins: dict[str, str] = {"root": f"{__name__.removesuffix('.main')}.plugins"}
 uvloop.install()
 app: Client = Client("elysian_chem_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN, plugins=plugins)
+
+db_instance: database.Database = database.Database(DB_PERSIST_PATH)
+cmdhelp_instance: command_helps.CommandHelps = command_helps.CommandHelps(app)

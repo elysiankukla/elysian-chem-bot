@@ -19,7 +19,7 @@ import json
 
 from tempfile import NamedTemporaryFile
 
-from elysian_chem_bot import db_instance
+from elysian_chem_bot import db_instance, cmdhelp_instance
 
 from pyrogram.client import Client
 from pyrogram.types import Message
@@ -34,3 +34,6 @@ async def dump_db(client: Client, message: Message) -> None:
 
         with open(f.name, "rb") as rf:
             await message.reply_document(rf)
+
+
+cmdhelp_instance.add_commands("dumpdb", "Dump the database.")
