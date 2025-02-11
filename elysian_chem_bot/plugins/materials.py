@@ -20,9 +20,11 @@ import zipfile
 from typing import Union, Any, cast
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from pathlib import Path
+from hashlib import sha1
 
-from elysian_chem_bot import db_instance
+from elysian_chem_bot import db_instance, DB_PERSIST_PATH
 
+from tgbot_python_v2.util.config import Config
 from pyrogram.client import Client
 from pyrogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
 from pyrogram.filters import command, create
@@ -32,6 +34,8 @@ from elysian_chem_bot.utils import sanitize_message
 
 log: logging.Logger = logging.getLogger(__name__)
 msg_to_be_watched: list[tuple[int, list[str]]] = []
+# TODO: only I know how to use this module, but let's worry about this later
+config: Config = Config(Path(Path(DB_PERSIST_PATH).parent).joinpath("extracted_files_cache.json").as_posix())
 
 
 async def should_be_handled(_, __, message: Message) -> bool:
@@ -56,15 +60,15 @@ async def get_buttons(sections: list[str]) -> list[str]:
 async def auto_extract_zip_archive(client: Client, message: Message, file_id: str) -> None:
     msg = await message.reply_text("Automatically extracting zip archive...")
     with NamedTemporaryFile() as tf:
-        log.info(f"created temporary file '{tf.name}'")
+        log.info("created temporary file '%s'", tf.name)
 
-        log.info(f"downloading document with file_id '{file_id}'")
+        log.info("downloading document with file_id '%s'", file_id)
         await msg.edit_text(f"**downloading document with file_id** `'{file_id}'`")
         await client.download_media(file_id, tf.name)
         log.info("document downloaded")
 
         with TemporaryDirectory() as td:
-            log.info(f"created temporary directory '{td}' for archive extraction")
+            log.info("created temporary directory '%s' for archive extraction", td)
             log.info("**extracting archive**")
             await msg.edit_text("Extracting the zip archive...")
             zipfile.ZipFile(tf.name).extractall(td)
@@ -73,10 +77,19 @@ async def auto_extract_zip_archive(client: Client, message: Message, file_id: st
             log.info("uploading extracted files")
             for file in Path(td).rglob("*"):
                 if file.is_file():
-                    log.info(f"uploading file '{file.as_posix()}'")
+                    log.info("uploading file '%s'", file.as_posix())
                     await msg.edit_text(f"**uploading file** `'{file.as_posix()}'`")
                     with open(file.as_posix(), "rb") as f:
-                        await message.reply_document(f, file_name=file.name)
+                        sha1sum: str = sha1(f.read()).hexdigest()
+                        if cached_file_id := config.config.get(sha1sum):
+                            log.info("file '%s' found in cache, re-using file_id", file.as_posix())
+                            await message.reply_document(cached_file_id, file_name=file.name)
+                        else:
+                            log.info("file '%s' NOT found in cache, uploading instead", file.as_posix())
+                            f.seek(0)
+                            doc = await message.reply_document(f, file_name=file.name)
+                            log.info("storing file '%s' in cache", file.as_posix())
+                            config.config.update({sha1sum: doc.document.file_id})
 
             await msg.delete()
 
