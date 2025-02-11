@@ -1,5 +1,5 @@
 # Pyrogram's session file
-*.session
+*.session*
 
 # Python-generated files
 __pycache__/
