@@ -24,7 +24,7 @@ from hashlib import sha1
 
 from elysian_chem_bot import db_instance, cmdhelp_instance, DB_PERSIST_PATH
 
-from tgbot_python_v2.util.config import Config
+from jsondb.database import JsonDB
 from pyrogram.client import Client
 from pyrogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
 from pyrogram.filters import command, create
@@ -34,8 +34,7 @@ from elysian_chem_bot.utils import sanitize_message
 
 log: logging.Logger = logging.getLogger(__name__)
 msg_to_be_watched: list[tuple[int, list[str]]] = []
-# TODO: only I know how to use this module, but let's worry about this later
-config: Config = Config(Path(Path(DB_PERSIST_PATH).parent).joinpath("extracted_files_cache.json").as_posix())
+cache_db: JsonDB = JsonDB(Path(Path(DB_PERSIST_PATH).parent).joinpath("extracted_files_cache.json").as_posix())
 
 
 async def should_be_handled(_, __, message: Message) -> bool:
@@ -55,8 +54,6 @@ async def get_buttons(sections: list[str]) -> list[str]:
     return list(cur_section)
 
 
-# TODO: cache file_id to not spam telegram server for file upload requests
-#       that already exist in the server
 async def auto_extract_zip_archive(client: Client, message: Message, file_id: str) -> None:
     msg = await message.reply_text("Automatically extracting zip archive...")
     with NamedTemporaryFile() as tf:
@@ -81,7 +78,7 @@ async def auto_extract_zip_archive(client: Client, message: Message, file_id: st
                     await msg.edit_text(f"**uploading file** `'{file.as_posix()}'`")
                     with open(file.as_posix(), "rb") as f:
                         sha1sum: str = sha1(f.read()).hexdigest()
-                        if cached_file_id := config.config.get(sha1sum):
+                        if cached_file_id := cache_db.data.get(sha1sum):
                             log.info("file '%s' found in cache, re-using file_id", file.as_posix())
                             await message.reply_document(cached_file_id, file_name=file.name)
                         else:
@@ -89,7 +86,7 @@ async def auto_extract_zip_archive(client: Client, message: Message, file_id: st
                             f.seek(0)
                             doc = await message.reply_document(f, file_name=file.name)
                             log.info("storing file '%s' in cache", file.as_posix())
-                            config.config.update({sha1sum: doc.document.file_id})
+                            cache_db.data.update({sha1sum: doc.document.file_id})
 
             await msg.delete()
 
