@@ -27,11 +27,14 @@ line-length = 120
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
+    "D101",     # undocumented-public-class
     "D103",     # undocumented-public-function
     "D104",     # undocumented-public-package
     "ARG001",   # unused-function-argument
     "PLW0603",  # global-statement
     "D100",     # undocumented-public-module
+    "TC001",    # typing-only-first-party-import
+    "COM812",   # missing-trailing-comma
 ]
 
 exclude = [

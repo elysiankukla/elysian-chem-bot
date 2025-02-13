@@ -30,6 +30,7 @@ from pyrogram.filters import command, create
 from pyrogram.types import KeyboardButton, Message, ReplyKeyboardMarkup
 
 from elysian_chem_bot import DB_PERSIST_PATH, cmdhelp_instance, db_instance
+from elysian_chem_bot.database_types import File, Sections
 from elysian_chem_bot.utils import sanitize_message
 
 log: logging.Logger = logging.getLogger(__name__)
@@ -43,7 +44,7 @@ async def should_be_handled(_, __, message: Message) -> bool:
     return any(message.reply_to_message.id == x[0] for x in msg_to_be_watched)
 
 
-async def get_buttons(sections: list[str]) -> list[str]:
+async def get_buttons(sections: Sections) -> list[str]:
     db_instance.raw_db = cast(dict[str, dict[str, Any]], db_instance.raw_db)
 
     cur_section: dict[str, dict[str, Any]] = db_instance.raw_db
@@ -98,19 +99,19 @@ async def handle_reply(client: Client, message: Message) -> None:
         return
 
     if message.from_user.id == message.chat.id:
-        sections: list[str] = next(x[1] for x in msg_to_be_watched if x[0] == message.from_user.id)
+        sections: Sections = next(x[1] for x in msg_to_be_watched if x[0] == message.from_user.id)
     else:
-        sections: list[str] = next(x[1] for x in msg_to_be_watched if x[0] == message.reply_to_message.id)
+        sections: Sections = next(x[1] for x in msg_to_be_watched if x[0] == message.reply_to_message.id)
     sections.append(message.text)
 
-    if not db_instance.is_sections_exist(sections)[0]:
+    if not db_instance.is_sections_exist(sections).status:
         sections.pop()
-        file: tuple[str, str] = db_instance.get_file(sections, message.text)
-        await message.reply_document(file[0])
+        file: File = db_instance.get_file(sections, message.text)
+        await message.reply_document(file.file_id)
 
         if message.text.endswith(".zip"):
             log.info("file ends with .zip, extracting")
-            await auto_extract_zip_archive(client, message, file[0])
+            await auto_extract_zip_archive(client, message, file.file_id)
 
         return
 
@@ -140,7 +141,7 @@ async def handle_reply(client: Client, message: Message) -> None:
     )
 
     if any(message.chat.id == x[0] for x in msg_to_be_watched):
-        rem: list[str] = sections.copy()
+        rem: Sections = sections.copy()
         rem.pop()
         msg_to_be_watched = list(filter(lambda x: x[0] != message.from_user.id, msg_to_be_watched))
         msg_to_be_watched.append((message.from_user.id, sections))
@@ -182,9 +183,9 @@ async def material(client: Client, message: Message) -> None:
 @Client.on_message(command(["addmaterial", "addbahan"]))
 async def add_material(client: Client, message: Message) -> None:
     clean_text: str = await sanitize_message(message.text, ["addmaterial", "addbahan"])
-    sections: list[str] = clean_text.split("/")
+    sections: Sections = clean_text.split("/")
 
-    if not db_instance.is_sections_exist(sections)[0]:
+    if not db_instance.is_sections_exist(sections).status:
         log.error("sections '%s' does not exist", sections)
         await message.reply_text("section does not exist")
         return

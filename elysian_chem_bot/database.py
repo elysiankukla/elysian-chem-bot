@@ -20,6 +20,8 @@ import logging
 from pathlib import Path
 from typing import Any, cast
 
+from elysian_chem_bot.database_types import File, Section, SectionCheckStatus, Sections
+
 log: logging.Logger = logging.getLogger(__name__)
 
 
@@ -45,38 +47,37 @@ class Database:
         with Path(self.db_path).open("w", encoding="utf-8") as f:
             json.dump(self.raw_db, f)
 
-    def is_sections_exist(self, sections: list[str]) -> tuple[bool, str | None]:
+    def is_sections_exist(self, sections: Sections) -> SectionCheckStatus:
         """Determines if the sections exist in the database.
 
         Args:
             sections (list[str]): The sections to check.
 
         Returns:
-            tuple[bool, str | None]: A tuple containing a boolean and a string,
-                where the boolean is True if the sections exist,
-                and the string is the section that does not exist.
+            SectionCheckStatus: which has two fields: status and value,
+                where value is the section that does not exist.
 
         """
-        cur_section: dict | Any = self.raw_db
+        cur_section: Section = self.raw_db
         for sec in sections:
             cur_section = cur_section.get(sec)
             if cur_section is None or not isinstance(cur_section, dict):
-                return False, cur_section
+                return SectionCheckStatus(status=False, value=cur_section)
 
-        return True, None
+        return SectionCheckStatus(status=True, value=None)
 
-    def add_section(self, sections: list[str]) -> None:
+    def add_section(self, sections: Sections) -> None:
         """Adds a section to the database.
 
         Args:
             sections (list[str]): The sections to add.
 
         """
-        cur_section: dict | Any = self.raw_db
+        cur_section: Section = self.raw_db
         for sec in sections:
             cur_section = cur_section.setdefault(sec, {})
 
-    def remove_section(self, sections: list[str]) -> None:
+    def remove_section(self, sections: Sections) -> None:
         """Removes a section from the database. Only the last element in the sections list will be removed.
 
            The rest serves as the path to the section.
@@ -88,7 +89,7 @@ class Database:
             None
 
         """
-        cur_section: dict | Any = self.raw_db
+        cur_section: Section = self.raw_db
         for sec in sections[:-1]:
             cur_section = cur_section.get(sec)
             if cur_section is None:
@@ -96,37 +97,37 @@ class Database:
 
         cur_section.pop(sections[-1])
 
-    def add_file(self, sections: list[str], file_name: str, file_id: str, file_unique_id: str) -> None:  # noqa: D102
-        status, _ = self.is_sections_exist(sections)
+    def add_file(self, sections: Sections, file_name: str, file_id: str, file_unique_id: str) -> None:  # noqa: D102
+        status = self.is_sections_exist(sections).status
         if not status:
             msg = "sections does not exist!"
             raise ValueError(msg)
 
-        cur_section: dict | Any = self.raw_db
+        cur_section: Section = self.raw_db
         for sec in sections:
             cur_section = cur_section.get(sec)
 
         cur_section[file_name] = (file_id, file_unique_id)
 
-    def remove_file(self, sections: list[str], file_name: str) -> None:  # noqa: D102
-        _, status = self.is_sections_exist(sections)
+    def remove_file(self, sections: Sections, file_name: str) -> None:  # noqa: D102
+        status = self.is_sections_exist(sections).status
         if not status:
             msg = "sections does not exist!"
             raise ValueError(msg)
 
-        cur_section: dict | Any = self.raw_db
+        cur_section: Section = self.raw_db
         for sec in sections:
             cur_section = cur_section.get(sec)
 
         cur_section.pop(file_name)
 
-    def get_file(self, sections: list[str], file_name: str) -> tuple[str, str]:  # noqa: D102
-        status, _ = self.is_sections_exist(sections)
+    def get_file(self, sections: Sections, file_name: str) -> File:  # noqa: D102
+        status = self.is_sections_exist(sections).status
         if not status:
             msg = "sections does not exist!"
             raise ValueError(msg)
 
-        cur_section: dict | Any = self.raw_db
+        cur_section: Section = self.raw_db
         for sec in sections:
             cur_section = cur_section.get(sec)
 
@@ -135,15 +136,15 @@ class Database:
             msg = "file does not exist!"
             raise ValueError(msg)
 
-        return file_id, file_unique_id
+        return File(file_id, file_unique_id)
 
-    def list_files(self, sections: list[str]) -> list[str]:  # noqa: D102
-        _, status = self.is_sections_exist(sections)
+    def list_files(self, sections: Sections) -> list[str]:  # noqa: D102
+        status = self.is_sections_exist(sections).status
         if not status:
             msg = "sections does not exist!"
             raise ValueError(msg)
 
-        cur_section: dict | Any = self.raw_db
+        cur_section: Section = self.raw_db
         for sec in sections:
             cur_section = cur_section.get(sec)
 
