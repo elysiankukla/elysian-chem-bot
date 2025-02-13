@@ -14,26 +14,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import io
 import json
-
 from tempfile import NamedTemporaryFile
 
-from elysian_chem_bot import db_instance, cmdhelp_instance
-
+from anyio import open_file
 from pyrogram.client import Client
-from pyrogram.types import Message
 from pyrogram.filters import command
+from pyrogram.types import Message
+
+from elysian_chem_bot import cmdhelp_instance, db_instance
 
 
 @Client.on_message(command("dumpdb"))
 async def dump_db(client: Client, message: Message) -> None:
     with NamedTemporaryFile(suffix=".json") as f:
-        with open(f.name, "w", encoding="utf-8") as jf:
-            json.dump(db_instance.raw_db, jf, indent=4)
+        async with await open_file(f.name, "w", encoding="utf-8") as jf:
+            content = json.dumps(db_instance.raw_db, indent=4)
+            await jf.write(content)
 
-        with open(f.name, "rb") as rf:
-            await message.reply_document(rf)
+        await message.reply_document(f.name)
 
 
 cmdhelp_instance.add_commands("dumpdb", "Dump the database.")

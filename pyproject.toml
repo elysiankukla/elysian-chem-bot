@@ -5,6 +5,7 @@ description = "Source code for https://t.me/ElysianChemBot"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "anyio>=4.8.0",
     "jsondb-hakimifr>=0.1.0",
     "kurigram>=2.1.37",
     "tgcrypto>=1.2.5",
@@ -16,5 +17,33 @@ dev = [
     "ruff>=0.9.3",
 ]
 
+
+##################################################################
+##################### BEGIN SECTION FOR RUFF #####################
+##################################################################
 [tool.ruff]
 line-length = 120
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "D103",     # undocumented-public-function
+    "D104",     # undocumented-public-package
+    "ARG001",   # unused-function-argument
+    "PLW0603",  # global-statement
+    "D100",     # undocumented-public-module
+]
+
+exclude = [
+    "scripts/add_license.py",
+    "elysian_chem_bot/coloured_logging_setup.py",
+]
+
+[tool.ruff.lint.flake8-annotations]
+suppress-dummy-args = true
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+##################################################################
+###################### end SECTION FOR RUFF ######################
+##################################################################

@@ -17,20 +17,17 @@
 import inspect
 import logging
 import os
-
-import elysian_chem_bot.coloured_logging_setup  # noqa: F401
-
-import uvloop
-
 from pathlib import Path
 
-from elysian_chem_bot import database, command_helps
-
+import uvloop
 from pyrogram.client import Client
+
+import elysian_chem_bot.coloured_logging_setup  # noqa: F401
+from elysian_chem_bot import command_helps, database
 
 _log: logging.Logger = logging.getLogger(__name__)
 
-API_ID: int = int(os.getenv("API_ID", 0))
+API_ID: int = int(os.getenv("API_ID", "0"))
 API_HASH: str = os.getenv("API_HASH", "")
 BOT_TOKEN: str = os.getenv("BOT_TOKEN", "")
 MODULE_DIR: str = str(Path(inspect.getfile(lambda _: _)).parent)
@@ -42,12 +39,13 @@ if Path(DB_PERSIST_PATH).exists() is False:
     _log.info(f"creating db file at {DB_PERSIST_PATH}")
     casted = [str(x) for x in Path(DB_PERSIST_PATH).parents]
     "/".join(casted)
-    with open(DB_PERSIST_PATH, "w", encoding="utf-8") as f:
+    with Path(DB_PERSIST_PATH).open("w", encoding="utf-8") as f:
         f.write("{}")
 
 
 if any((API_ID == 0, API_HASH == "", BOT_TOKEN == "")):
-    raise ValueError("please set API_ID, API_HASH and BOT_TOKEN properly")
+    msg = "please set API_ID, API_HASH and BOT_TOKEN properly"
+    raise ValueError(msg)
 
 plugins: dict[str, str] = {"root": f"{__name__.removesuffix('.main')}.plugins"}
 uvloop.install()

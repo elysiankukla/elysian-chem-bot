@@ -14,9 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
 import atexit
 import json
+import logging
+from pathlib import Path
 from typing import Any, cast
 
 log: logging.Logger = logging.getLogger(__name__)
@@ -25,7 +26,7 @@ log: logging.Logger = logging.getLogger(__name__)
 class Database:
     """Currently using JSON."""
 
-    def __init__(self, db_path: str = "") -> None:
+    def __init__(self, db_path: str = "") -> None:  # noqa: D107
         self.db_path = db_path
         self.db_loaded: bool = False
         self.raw_db: dict[str, Any] | None = None
@@ -33,14 +34,15 @@ class Database:
         self.load_db()
         atexit.register(self._atexit)
 
-    def load_db(self) -> None:
-        with open(self.db_path, "r", encoding="utf-8") as f:
+    def load_db(self) -> None:  # noqa: D102
+        with Path(self.db_path).open(encoding="utf-8") as f:
             self.raw_db = json.load(f)
             if not isinstance(self.raw_db, dict):
-                raise TypeError(f"something is wrong with database, the type is: {type(self.raw_db)}")
+                msg = f"something is wrong with database, the type is: {type(self.raw_db)}"
+                raise TypeError(msg)
 
-    def write_db(self) -> None:
-        with open(self.db_path, "w", encoding="utf-8") as f:
+    def write_db(self) -> None:  # noqa: D102
+        with Path(self.db_path).open("w", encoding="utf-8") as f:
             json.dump(self.raw_db, f)
 
     def is_sections_exist(self, sections: list[str]) -> tuple[bool, str | None]:
@@ -53,6 +55,7 @@ class Database:
             tuple[bool, str | None]: A tuple containing a boolean and a string,
                 where the boolean is True if the sections exist,
                 and the string is the section that does not exist.
+
         """
         cur_section: dict | Any = self.raw_db
         for sec in sections:
@@ -67,6 +70,7 @@ class Database:
 
         Args:
             sections (list[str]): The sections to add.
+
         """
         cur_section: dict | Any = self.raw_db
         for sec in sections:
@@ -74,6 +78,7 @@ class Database:
 
     def remove_section(self, sections: list[str]) -> None:
         """Removes a section from the database. Only the last element in the sections list will be removed.
+
            The rest serves as the path to the section.
 
         Args:
@@ -81,6 +86,7 @@ class Database:
 
         Returns:
             None
+
         """
         cur_section: dict | Any = self.raw_db
         for sec in sections[:-1]:
@@ -90,10 +96,11 @@ class Database:
 
         cur_section.pop(sections[-1])
 
-    def add_file(self, sections: list[str], file_name: str, file_id: str, file_unique_id: str) -> None:
+    def add_file(self, sections: list[str], file_name: str, file_id: str, file_unique_id: str) -> None:  # noqa: D102
         status, _ = self.is_sections_exist(sections)
         if not status:
-            raise ValueError("sections does not exist!")
+            msg = "sections does not exist!"
+            raise ValueError(msg)
 
         cur_section: dict | Any = self.raw_db
         for sec in sections:
@@ -101,10 +108,11 @@ class Database:
 
         cur_section[file_name] = (file_id, file_unique_id)
 
-    def remove_file(self, sections: list[str], file_name: str) -> None:
+    def remove_file(self, sections: list[str], file_name: str) -> None:  # noqa: D102
         _, status = self.is_sections_exist(sections)
         if not status:
-            raise ValueError("sections does not exist!")
+            msg = "sections does not exist!"
+            raise ValueError(msg)
 
         cur_section: dict | Any = self.raw_db
         for sec in sections:
@@ -112,10 +120,11 @@ class Database:
 
         cur_section.pop(file_name)
 
-    def get_file(self, sections: list[str], file_name: str) -> tuple[str, str]:
+    def get_file(self, sections: list[str], file_name: str) -> tuple[str, str]:  # noqa: D102
         status, _ = self.is_sections_exist(sections)
         if not status:
-            raise ValueError("sections does not exist!")
+            msg = "sections does not exist!"
+            raise ValueError(msg)
 
         cur_section: dict | Any = self.raw_db
         for sec in sections:
@@ -123,14 +132,16 @@ class Database:
 
         file_id, file_unique_id = cast(dict, cur_section.get(file_name))
         if file_id is None:
-            raise ValueError("file does not exist!")
+            msg = "file does not exist!"
+            raise ValueError(msg)
 
         return file_id, file_unique_id
 
-    def list_files(self, sections: list[str]) -> list[str]:
+    def list_files(self, sections: list[str]) -> list[str]:  # noqa: D102
         _, status = self.is_sections_exist(sections)
         if not status:
-            raise ValueError("sections does not exist!")
+            msg = "sections does not exist!"
+            raise ValueError(msg)
 
         cur_section: dict | Any = self.raw_db
         for sec in sections:

@@ -14,23 +14,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
 import json
+import logging
 import zipfile
-
-from typing import Union, Any, cast
-from tempfile import NamedTemporaryFile, TemporaryDirectory
-from pathlib import Path
 from hashlib import sha1
+from pathlib import Path
+from tempfile import NamedTemporaryFile, TemporaryDirectory
+from typing import Any, cast
 
-from elysian_chem_bot import db_instance, cmdhelp_instance, DB_PERSIST_PATH
-
+from anyio import open_file
 from jsondb.database import JsonDB
 from pyrogram.client import Client
-from pyrogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
-from pyrogram.filters import command, create
 from pyrogram.enums import MessageMediaType
+from pyrogram.filters import command, create
+from pyrogram.types import KeyboardButton, Message, ReplyKeyboardMarkup
 
+from elysian_chem_bot import DB_PERSIST_PATH, cmdhelp_instance, db_instance
 from elysian_chem_bot.utils import sanitize_message
 
 log: logging.Logger = logging.getLogger(__name__)
@@ -40,12 +39,11 @@ cache_db: JsonDB = JsonDB(Path(Path(DB_PERSIST_PATH).parent).joinpath("extracted
 
 async def should_be_handled(_, __, message: Message) -> bool:
     if not message.reply_to_message:
-        return any([message.chat.id == x[0] for x in msg_to_be_watched])
-    return any([message.reply_to_message.id == x[0] for x in msg_to_be_watched])
+        return any(message.chat.id == x[0] for x in msg_to_be_watched)
+    return any(message.reply_to_message.id == x[0] for x in msg_to_be_watched)
 
 
 async def get_buttons(sections: list[str]) -> list[str]:
-    global db_instance
     db_instance.raw_db = cast(dict[str, dict[str, Any]], db_instance.raw_db)
 
     cur_section: dict[str, dict[str, Any]] = db_instance.raw_db
@@ -77,15 +75,15 @@ async def auto_extract_zip_archive(client: Client, message: Message, file_id: st
                 if file.is_file():
                     log.info("uploading file '%s'", file.as_posix())
                     await msg.edit_text(f"**uploading file** `'{file.as_posix()}'`")
-                    with open(file.as_posix(), "rb") as f:
-                        sha1sum: str = sha1(f.read()).hexdigest()
+                    async with await open_file(file.as_posix(), "rb") as f:
+                        content = await f.read()
+                        sha1sum: str = sha1(content).hexdigest()  # noqa: S324
                         if cached_file_id := cache_db.data.get(sha1sum):
                             log.info("file '%s' found in cache, re-using file_id", file.as_posix())
                             await message.reply_document(cached_file_id, file_name=file.name)
                         else:
                             log.info("file '%s' NOT found in cache, uploading instead", file.as_posix())
-                            f.seek(0)
-                            doc = await message.reply_document(f, file_name=file.name)
+                            doc = await message.reply_document(file.as_posix(), file_name=file.name)
                             log.info("storing file '%s' in cache", file.as_posix())
                             cache_db.data.update({sha1sum: doc.document.file_id})
 
@@ -100,9 +98,9 @@ async def handle_reply(client: Client, message: Message) -> None:
         return
 
     if message.from_user.id == message.chat.id:
-        sections: list[str] = [x[1] for x in msg_to_be_watched if x[0] == message.from_user.id][0]
+        sections: list[str] = next(x[1] for x in msg_to_be_watched if x[0] == message.from_user.id)
     else:
-        sections: list[str] = [x[1] for x in msg_to_be_watched if x[0] == message.reply_to_message.id][0]
+        sections: list[str] = next(x[1] for x in msg_to_be_watched if x[0] == message.reply_to_message.id)
     sections.append(message.text)
 
     if not db_instance.is_sections_exist(sections)[0]:
@@ -117,15 +115,15 @@ async def handle_reply(client: Client, message: Message) -> None:
         return
 
     material_buttons: list[str] = await get_buttons(sections)
-    buttons_rows: list[list[Union[KeyboardButton, str]]] = []
+    buttons_rows: list[list[KeyboardButton | str]] = []
 
     while len(material_buttons) > 0:
         try:
             current_buttons: list[str] = material_buttons[0:2]
-            converted: list[Union[KeyboardButton, str]] = [KeyboardButton(x) for x in current_buttons]
+            converted: list[KeyboardButton | str] = [KeyboardButton(x) for x in current_buttons]
             material_buttons = material_buttons[2:]
         except IndexError:
-            converted: list[Union[KeyboardButton, str]] = [KeyboardButton(material_buttons[0])]
+            converted: list[KeyboardButton | str] = [KeyboardButton(material_buttons[0])]
             material_buttons.pop(0)
 
         buttons_rows.append(converted)
@@ -141,7 +139,7 @@ async def handle_reply(client: Client, message: Message) -> None:
         reply_markup=ReplyKeyboardMarkup(buttons_rows),
     )
 
-    if any([message.chat.id == x[0] for x in msg_to_be_watched]):
+    if any(message.chat.id == x[0] for x in msg_to_be_watched):
         rem: list[str] = sections.copy()
         rem.pop()
         msg_to_be_watched = list(filter(lambda x: x[0] != message.from_user.id, msg_to_be_watched))
@@ -155,15 +153,15 @@ async def material(client: Client, message: Message) -> None:
     global msg_to_be_watched
 
     material_buttons: list[str] = await get_buttons([])
-    buttons_rows: list[list[Union[KeyboardButton, str]]] = []
+    buttons_rows: list[list[KeyboardButton | str]] = []
 
     while len(material_buttons) > 0:
         try:
             current_buttons = material_buttons[0:2]
-            btns: list[Union[KeyboardButton, str]] = [KeyboardButton(text=x) for x in current_buttons]
+            btns: list[KeyboardButton | str] = [KeyboardButton(text=x) for x in current_buttons]
             material_buttons = material_buttons[2:]
         except IndexError:
-            btns: list[Union[KeyboardButton, str]] = [KeyboardButton(text=material_buttons[0])]
+            btns: list[KeyboardButton | str] = [KeyboardButton(text=material_buttons[0])]
             material_buttons.pop(0)
 
         buttons_rows.append(btns)
@@ -225,11 +223,11 @@ async def add_material(client: Client, message: Message) -> None:
 @Client.on_message(command("dumpcache"))
 async def dump_cache(client: Client, message: Message) -> None:
     with NamedTemporaryFile("w+", suffix=".json") as f:
-        with open(f.name, "w", encoding="utf-8") as wf:
-            json.dump(cache_db.data, wf, indent=4)
+        async with await open_file(f.name, "w", encoding="utf-8") as wf:
+            content = json.dumps(cache_db.data, indent=4)
+            await wf.write(content)
 
-        with open(f.name, "rb") as rf:
-            await message.reply_document(rf)
+        await message.reply_document(f.name)
 
 
 cmdhelp_instance.add_commands(["bahan", "material"], "Get materials")

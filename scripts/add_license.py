@@ -27,7 +27,6 @@ def add_license_header(file_path) -> bool:
         content = f.read()
 
         if license_header in content:
-            print(f"! License header already exists in {file_path}")
             return False
 
         f.seek(0, 0)
@@ -35,7 +34,7 @@ def add_license_header(file_path) -> bool:
         return True
 
 
-for file in Path(".").rglob("*.py"):
+for file in Path().rglob("*.py"):
     try:
         if str(list(file.parents)[-2]) in IGNORE_DIRS:
             continue
@@ -43,8 +42,6 @@ for file in Path(".").rglob("*.py"):
         pass
 
     if file.name == "add_license.py":
-        print("-> Skipping this file")
         continue
 
     add_license_header(file)
-    print(f"-> Added license header to {file}")

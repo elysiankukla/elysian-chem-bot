@@ -14,13 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Union, Iterable
+from collections.abc import Iterable
 
 from elysian_chem_bot import app
 
 
-async def sanitize_message(text: str, command: Union[Iterable[str], str]) -> str:
-    """cleans /command or /command@username from the incoming message."""
+async def sanitize_message(text: str, command: Iterable[str] | str) -> str:
+    """Cleans /command or /command@username from the incoming message."""
     username = (await app.get_me()).username
 
     if isinstance(command, str):
