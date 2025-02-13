@@ -15,6 +15,7 @@
 # limitations under the License.
 
 import logging
+import json
 import zipfile
 
 from typing import Union, Any, cast
@@ -221,4 +222,15 @@ async def add_material(client: Client, message: Message) -> None:
     await message.reply_text(f"added {', '.join(mantap)} to section **{sections}**")
 
 
+@Client.on_message(command("dumpcache"))
+async def dump_cache(client: Client, message: Message) -> None:
+    with NamedTemporaryFile("w+", suffix=".json") as f:
+        with open(f.name, "w", encoding="utf-8") as wf:
+            json.dump(cache_db.data, wf, indent=4)
+
+        with open(f.name, "rb") as rf:
+            await message.reply_document(rf)
+
+
 cmdhelp_instance.add_commands(["bahan", "material"], "Get materials")
+cmdhelp_instance.add_commands("dumpcache", "dump the cache of extracted files")
