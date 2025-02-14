@@ -15,6 +15,7 @@
 # limitations under the License.
 
 import asyncio
+import sys
 import time
 
 from pyrogram.client import Client
@@ -49,4 +50,9 @@ def main() -> None:
     _ = app.start()
     cmdhelp_instance.update_commands_telegram()
 
-    asyncio.get_event_loop().run_forever()
+    try:
+        asyncio.get_event_loop().run_forever()
+    except KeyboardInterrupt:
+        # exit gracefully
+        _ = app.stop()
+        sys.exit(0)
