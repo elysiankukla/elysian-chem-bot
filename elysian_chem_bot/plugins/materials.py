@@ -17,7 +17,7 @@
 import json
 import logging
 import zipfile
-from hashlib import sha1
+from hashlib import md5
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Any, cast
@@ -36,6 +36,12 @@ from elysian_chem_bot.utils import sanitize_message
 log: logging.Logger = logging.getLogger(__name__)
 msg_to_be_watched: list[tuple[int, list[str]]] = []
 cache_db: JsonDB = JsonDB(Path(Path(DB_PERSIST_PATH).parent).joinpath("extracted_files_cache.json").as_posix())
+
+# Migrate our cache DB from sha1 to md5
+if not cache_db.data.get("hash_type"):
+    log.info("migrating cache database from sha1 to md5, discarding old sha1 caches")
+    cache_db.data.clear()
+    cache_db.data.update({"hash_type": "md5"})
 
 
 async def should_be_handled(_, __, message: Message) -> bool:
@@ -78,15 +84,15 @@ async def auto_extract_zip_archive(client: Client, message: Message, file_id: st
                     await msg.edit_text(f"**uploading file** `'{file.as_posix()}'`")
                     async with await open_file(file.as_posix(), "rb") as f:
                         content = await f.read()
-                        sha1sum: str = sha1(content).hexdigest()  # noqa: S324
-                        if cached_file_id := cache_db.data.get(sha1sum):
+                        md5sum: str = md5(content).hexdigest()  # noqa: S324
+                        if cached_file_id := cache_db.data.get(md5sum):
                             log.info("file '%s' found in cache, re-using file_id", file.as_posix())
                             await message.reply_document(cached_file_id, file_name=file.name)
                         else:
                             log.info("file '%s' NOT found in cache, uploading instead", file.as_posix())
                             doc = await message.reply_document(file.as_posix(), file_name=file.name)
                             log.info("storing file '%s' in cache", file.as_posix())
-                            cache_db.data.update({sha1sum: doc.document.file_id})
+                            cache_db.data.update({md5sum: doc.document.file_id})
 
             await msg.delete()
 
