@@ -18,47 +18,31 @@ DB_PERSIST_PATH: str = os.getenv("DB_PERSIST_PATH", "/persist/db.json")
 
 As you can see, the required variables are: `API_ID`, `API_HASH`, `BOT_TOKEN`, `DB_PERSIST_PATH`.
 
-## Project Structure
+## Contribution Guide
+To contribute to the codebase, you need to have these installed:
+1. `uv` (drop in pip replacement)
+1. `ruff` (Python formatter and linter)
 
+```bash
+pip3 install uv
+uv tool install ruff@latest
 ```
-.
-├── elysian_chem_bot
-│   ├── coloured_logging_setup.py
-│   ├── database.py
-│   ├── elysian_chem_bot.session
-│   ├── __init__.py
-│   ├── logging.py
-│   ├── __main__.py
-│   ├── main.py
-│   ├── plugins
-│   │   ├── materials.py
-│   │   ├── __pycache__
-│   │   │   ├── materials.cpython-313.pyc
-│   │   │   └── sections.cpython-313.pyc
-│   │   └── sections.py
-│   └── utils.py
-├── elysian_chem_bot.session
-├── LICENSE
-├── pyproject.toml
-├── README.md
-├── scripts
-│   └── add_license.py
-└── uv.lock
 
-```
+If these does not work, please refer to their respective documentation.
+***DO NOT SUBMIT CODES THAT ARE UNFORMATTED/NOT LINTED.***
 
 ## TODOs
 
 This list is non-exhaustive.
 
-- **Highest priority: back button!!!** *<sup>imagine sending /bahan a lot of times</sup>***
-- Proper typing. For example, in [`database.py`](./elysian_chem_bot/database.py),
-  `sections` parameters are annotated with `list[str]`. So is in another modules.
+- **Highest priority: back button!!!** *<sup>imagine sending /bahan a lot of times</sup>*
 - Add more debug logging, in case something went wrong later.
-- Add plugin to dump/load module from file through command, useful
+- Add plugin to dump/load database from file through command, useful
   for backing up database regularly. Not to mention restoration in
   case of database corruption.
-- Find a better database format? JSON is honestly not suitable.
+
+<!-- hahahah this will stay in our dream -->
+<!-- - Find a better database format? JSON is honestly not suitable. -->
 
 ## License
 
