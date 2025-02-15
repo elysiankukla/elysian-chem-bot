@@ -175,7 +175,7 @@ async def material(client: Client, message: Message) -> None:
 
     log.info("rows: %s", buttons_rows)
     msg = await message.reply_text(
-        "Please use the button below to make selection",
+        "Please use the button below to make selection (try /bahanbeta for the new experience!)",
         reply_markup=ReplyKeyboardMarkup(buttons_rows),
     )
 
