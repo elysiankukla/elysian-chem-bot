@@ -55,7 +55,7 @@ class MaterialCallbackData:
         return f"{'/'.join(self.sections)}:{self.file_name_or_section}"
 
 
-async def generate_inline_keyboard_markup(sections: Sections, columns: int = 3) -> InlineKeyboardMarkup:
+async def generate_inline_keyboard_markup(sections: Sections, columns: int = 2) -> InlineKeyboardMarkup:
     db_instance.raw_db = cast(dict[str, dict[str, Any]], db_instance.raw_db)
 
     # Get to the requested section first
