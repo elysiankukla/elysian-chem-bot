@@ -11,6 +11,7 @@ ignore = [
     "PLW0603",  # global-statement
     "D100",     # undocumented-public-module
     "TC001",    # typing-only-first-party-import
+    "TC003",    # typing-only-standard-library-import
     "COM812",   # missing-trailing-comma
 ]
 
